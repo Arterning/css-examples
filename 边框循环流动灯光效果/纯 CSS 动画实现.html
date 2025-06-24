@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style>
+        @keyframes flow {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 200% 50%; }
+        }
+        .animate-flow-border {
+          animation: flow 3s linear infinite;
+        }
+      </style>
+
+  </head>
+  <body>
+    <button class="relative overflow-hidden p-4 rounded-lg bg-gray-900 text-white group">
+        <span class="relative z-10">流动边框按钮</span>
+        
+        <!-- 流动边框 -->
+        <span class="absolute inset-0 bg-gradient-to-r from-blue-500 via-blue-300 to-blue-500 bg-[length:200%_100%] animate-flow-border rounded-lg opacity-75"></span>
+        
+        <!-- 按钮底色 -->
+        <span class="absolute inset-[2px] bg-gray-800 rounded-md z-0"></span>
+      </button>
+
+
+      <button class="relative overflow-hidden p-4 rounded-lg bg-gray-900 text-white group">
+        <span class="relative z-10">四边流动按钮</span>
+        
+        <!-- 顶部流动条 -->
+        <span class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-flow-x"></span>
+        
+        <!-- 右侧流动条 -->
+        <span class="absolute top-0 right-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-blue-500 to-transparent animate-flow-y delay-100"></span>
+        
+        <!-- 底部流动条 -->
+        <span class="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-flow-x delay-200"></span>
+        
+        <!-- 左侧流动条 -->
+        <span class="absolute top-0 left-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-blue-500 to-transparent animate-flow-y delay-300"></span>
+        
+        <!-- 按钮底色 -->
+        <span class="absolute inset-[2px] bg-gray-800 rounded-md z-0"></span>
+      </button>
+      
+      <style>
+        @keyframes flow-x {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes flow-y {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100%); }
+        }
+        .animate-flow-x {
+          animation: flow-x 2s linear infinite;
+        }
+        .animate-flow-y {
+          animation: flow-y 2s linear infinite;
+        }
+      </style>
+
+
+
+<button class="relative overflow-hidden p-4 rounded-lg bg-gray-900 text-white group">
+    <span class="relative z-10">光晕流动按钮</span>
+    
+    <!-- 光晕效果 -->
+    <span class="absolute inset-0 rounded-lg p-[2px]">
+      <span class="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/80 to-blue-500/0 animate-flow-opacity rounded-lg"></span>
+    </span>
+    
+    <!-- 按钮底色 -->
+    <span class="absolute inset-[2px] bg-gray-800 rounded-md z-0"></span>
+  </button>
+  
+  <style>
+    @keyframes flow-opacity {
+      0%, 100% { opacity: 0; transform: translateX(-50%); }
+      50% { opacity: 1; transform: translateX(50%); }
+    }
+    .animate-flow-opacity {
+      animation: flow-opacity 3s ease-in-out infinite;
+    }
+  </style>
+      
+      
+  </body>
+</html>
+

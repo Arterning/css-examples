@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>滚动动画效果</title>
+    <style>
+        .animate-section {
+            height: 900px;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+        
+        .animate-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="animate-section">内容区块1</div>
+    <div class="animate-section">内容区块2</div>
+    <div class="animate-section">内容区块3</div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const animateSections = document.querySelectorAll('.animate-section');
+            
+            function checkVisibility() {
+                animateSections.forEach(section => {
+                    const sectionTop = section.getBoundingClientRect().top;
+                    const windowHeight = window.innerHeight;
+                    
+                    if (sectionTop < windowHeight * 0.85) {
+                        section.classList.add('visible');
+                    }
+                });
+            }
+            
+            // 初始检查
+            checkVisibility();
+            
+            // 滚动时检查
+            window.addEventListener('scroll', checkVisibility);
+        });
+    </script>
+</body>
+</html>

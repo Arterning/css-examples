@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古文献管理系统</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8B4513',
+                        secondary: '#D2B48C'
+                    },
+                    borderRadius: {
+                        'none': '0px',
+                        'sm': '4px',
+                        DEFAULT: '8px',
+                        'md': '12px',
+                        'lg': '16px',
+                        'xl': '20px',
+                        '2xl': '24px',
+                        '3xl': '32px',
+                        'full': '9999px',
+                        'button': '8px'
+                    },
+                    fontFamily: {
+                        'serif-sc': ['Noto Serif SC', 'serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :where([class^="ri-"])::before {
+            content: "\f3c2";
+        }
+        
+        .ancient-border {
+            border: 2px solid #D2B48C;
+            border-image: linear-gradient(45deg, #D2B48C, #8B4513, #D2B48C) 1;
+        }
+        
+        .ancient-shadow {
+            box-shadow: 0 4px 12px rgba(139, 69, 19, 0.1);
+        }
+        
+        .selected-item {
+            border-left: 4px solid #8B4513;
+            background: linear-gradient(90deg, rgba(139, 69, 19, 0.05) 0%, rgba(255, 255, 255, 1) 100%);
+        }
+        
+        .tag-ancient {
+            background: linear-gradient(135deg, #F5F5DC 0%, #E6E6FA 100%);
+            color: #8B4513;
+            border: 1px solid rgba(139, 69, 19, 0.2);
+        }
+        
+        .search-focus {
+            border-color: #8B4513;
+            box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 69, 19, 0.15);
+        }
+        
+        .ancient-button {
+            background: linear-gradient(135deg, #F5F5DC 0%, #FFF8DC 100%);
+            border: 1px solid #D2B48C;
+            color: #8B4513;
+        }
+        
+        .ancient-button:hover {
+            background: linear-gradient(135deg, #F0E68C 0%, #F5F5DC 100%);
+            border-color: #8B4513;
+        }
+        
+        .metadata-table th {
+            background: linear-gradient(135deg, #FAF0E6 0%, #F5F5DC 100%);
+            color: #8B4513;
+            font-weight: 600;
+        }
+        
+        .image-viewer {
+            background: radial-gradient(circle at center, #FFFEF7 0%, #F8F8FF 100%);
+        }
+    </style>
+</head>
+<body class="bg-white font-serif-sc">
+    <div class="h-screen flex flex-col">
+        <!-- 顶部搜索和功能区 -->
+        <div class="h-20 bg-white border-b border-gray-200 flex items-center px-6 ancient-shadow">
+            <div class="flex-1 flex items-center space-x-6">
+                <!-- 搜索框 -->
+                <div class="relative flex-1 max-w-md">
+                    <div class="w-5 h-5 flex items-center justify-center absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                        <i class="ri-search-line"></i>
+                    </div>
+                    <input type="text" placeholder="搜索古文献..." 
+                           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 !rounded-button text-sm focus:outline-none focus:search-focus transition-all">
+                </div>
+                
+                <!-- 标签筛选 -->
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-600">标签筛选：</span>
+                    <div class="flex space-x-2">
+                        <span class="tag-ancient px-3 py-1 !rounded-button text-xs cursor-pointer hover:bg-opacity-80">史书</span>
+                        <span class="tag-ancient px-3 py-1 !rounded-button text-xs cursor-pointer hover:bg-opacity-80">诗词</span>
+                        <span class="tag-ancient px-3 py-1 !rounded-button text-xs cursor-pointer hover:bg-opacity-80">医学</span>
+                        <button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-primary">
+                            <i class="ri-add-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 功能按钮组 -->
+            <div class="flex items-center space-x-3">
+                <button class="ancient-button px-4 py-2 !rounded-button text-sm hover:shadow-md transition-all whitespace-nowrap">
+                    <div class="w-4 h-4 flex items-center justify-center mr-2">
+                        <i class="ri-grid-line"></i>
+                    </div>
+                    网格视图
+                </button>
+                <button class="ancient-button px-4 py-2 !rounded-button text-sm hover:shadow-md transition-all whitespace-nowrap">
+                    <div class="w-4 h-4 flex items-center justify-center mr-2">
+                        <i class="ri-sort-desc"></i>
+                    </div>
+                    按年代排序
+                </button>
+                <button class="bg-primary text-white px-4 py-2 !rounded-button text-sm hover:bg-opacity-90 transition-all whitespace-nowrap">
+                    <div class="w-4 h-4 flex items-center justify-center mr-2">
+                        <i class="ri-checkbox-multiple-line"></i>
+                    </div>
+                    批量操作
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex-1 flex">
+            <!-- 左侧文献列表 -->
+            <div class="w-96 bg-gray-50 border-r border-gray-200 overflow-y-auto">
+                <div class="p-4 space-y-3">
+                    <!-- 文献条目1 -->
+                    <div class="bg-white !rounded-md p-4 hover-lift transition-all cursor-pointer selected-item">
+                        <div class="flex space-x-4">
+                            <div class="w-20 h-24 flex-shrink-0">
+                                <img src="https://readdy.ai/api/search-image?query=ancient%20Chinese%20manuscript%20with%20traditional%20calligraphy%20on%20aged%20paper%2C%20classical%20book%20cover%20with%20elegant%20binding%2C%20warm%20lighting%2C%20scholarly%20atmosphere%2C%20traditional%20Chinese%20text%20visible&width=160&height=200&seq=ancient_book_1&orientation=portrait" 
+                                     alt="古籍封面" class="w-full h-full object-cover ancient-border !rounded-sm">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-900 text-base mb-1 truncate">史记·本纪第一</h3>
+                                <p class="text-sm text-gray-600 mb-2">司马迁 著 · 西汉时期</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">史书</span>
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">传记</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文献条目2 -->
+                    <div class="bg-white !rounded-md p-4 hover-lift transition-all cursor-pointer">
+                        <div class="flex space-x-4">
+                            <div class="w-20 h-24 flex-shrink-0">
+                                <img src="https://readdy.ai/api/search-image?query=ancient%20Chinese%20poetry%20manuscript%20with%20delicate%20calligraphy%2C%20traditional%20scroll%20format%2C%20silk%20texture%20background%2C%20classical%20Chinese%20characters%2C%20scholarly%20elegance&width=160&height=200&seq=ancient_book_2&orientation=portrait" 
+                                     alt="古籍封面" class="w-full h-full object-cover ancient-border !rounded-sm">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-900 text-base mb-1 truncate">唐诗三百首</h3>
+                                <p class="text-sm text-gray-600 mb-2">蘅塘退士 编 · 清朝康熙年间</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">诗词</span>
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">选集</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文献条目3 -->
+                    <div class="bg-white !rounded-md p-4 hover-lift transition-all cursor-pointer">
+                        <div class="flex space-x-4">
+                            <div class="w-20 h-24 flex-shrink-0">
+                                <img src="https://readdy.ai/api/search-image?query=ancient%20Chinese%20medical%20text%20with%20traditional%20herbal%20illustrations%2C%20classical%20medical%20manuscript%2C%20aged%20parchment%20with%20detailed%20drawings%2C%20scholarly%20medical%20documentation&width=160&height=200&seq=ancient_book_3&orientation=portrait" 
+                                     alt="古籍封面" class="w-full h-full object-cover ancient-border !rounded-sm">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-900 text-base mb-1 truncate">本草纲目</h3>
+                                <p class="text-sm text-gray-600 mb-2">李时珍 著 · 明朝万历年间</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">医学</span>
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">本草</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文献条目4 -->
+                    <div class="bg-white !rounded-md p-4 hover-lift transition-all cursor-pointer">
+                        <div class="flex space-x-4">
+                            <div class="w-20 h-24 flex-shrink-0">
+                                <img src="https://readdy.ai/api/search-image?query=ancient%20Chinese%20philosophical%20text%20with%20classical%20calligraphy%2C%20traditional%20wisdom%20manuscript%2C%20aged%20paper%20with%20elegant%20writing%2C%20scholarly%20philosophical%20work&width=160&height=200&seq=ancient_book_4&orientation=portrait" 
+                                     alt="古籍封面" class="w-full h-full object-cover ancient-border !rounded-sm">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-900 text-base mb-1 truncate">论语集注</h3>
+                                <p class="text-sm text-gray-600 mb-2">朱熹 注 · 南宋淳熙年间</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">哲学</span>
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">注释</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 文献条目5 -->
+                    <div class="bg-white !rounded-md p-4 hover-lift transition-all cursor-pointer">
+                        <div class="flex space-x-4">
+                            <div class="w-20 h-24 flex-shrink-0">
+                                <img src="https://readdy.ai/api/search-image?query=ancient%20Chinese%20novel%20manuscript%20with%20traditional%20storytelling%20format%2C%20classical%20literature%20binding%2C%20aged%20paper%20with%20narrative%20text%2C%20traditional%20Chinese%20fiction&width=160&height=200&seq=ancient_book_5&orientation=portrait" 
+                                     alt="古籍封面" class="w-full h-full object-cover ancient-border !rounded-sm">
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-semibold text-gray-900 text-base mb-1 truncate">红楼梦</h3>
+                                <p class="text-sm text-gray-600 mb-2">曹雪芹 著 · 清朝乾隆年间</p>
+                                <div class="flex flex-wrap gap-1">
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">小说</span>
+                                    <span class="tag-ancient px-2 py-0.5 !rounded-sm text-xs">古典</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 右侧详情展示区 -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-8">
+                    <!-- 大图预览区 -->
+                    <div class="image-viewer !rounded-lg p-6 mb-8 ancient-shadow">
+                        <div class="flex justify-center">
+                            <img src="https://readdy.ai/api/search-image?query=ancient%20Chinese%20manuscript%20page%20showing%20traditional%20calligraphy%2C%20classical%20text%20layout%20with%20vertical%20writing%2C%20aged%20paper%20texture%2C%20scholarly%20document%20with%20elegant%20brushwork%2C%20historical%20Chinese%20literature&width=600&height=800&seq=manuscript_detail&orientation=portrait" 
+                                 alt="史记详细页面" class="max-w-full max-h-96 object-contain ancient-border">
+                        </div>
+                        <div class="flex justify-center mt-4 space-x-4">
+                            <button class="ancient-button px-4 py-2 !rounded-button text-sm whitespace-nowrap">
+                                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                                    <i class="ri-zoom-in-line"></i>
+                                </div>
+                                放大
+                            </button>
+                            <button class="ancient-button px-4 py-2 !rounded-button text-sm whitespace-nowrap">
+                                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                                    <i class="ri-rotate-left-line"></i>
+                                </div>
+                                旋转
+                            </button>
+                            <button class="ancient-button px-4 py-2 !rounded-button text-sm whitespace-nowrap">
+                                <div class="w-4 h-4 flex items-center justify-center mr-2">
+                                    <i class="ri-download-line"></i>
+                                </div>
+                                下载
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 基础信息区 -->
+                    <div class="bg-white !rounded-lg ancient-shadow p-6 mb-8">
+                        <h1 class="text-3xl font-bold text-gray-900 mb-4">史记·本纪第一</h1>
+                        <div class="grid grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-semibold text-primary mb-3">基本信息</h3>
+                                <div class="space-y-2">
+                                    <p><span class="text-gray-600">作者：</span>司马迁</p>
+                                    <p><span class="text-gray-600">朝代：</span>西汉时期</p>
+                                    <p><span class="text-gray-600">成书年代：</span>公元前 109 年 - 公元前 91 年</p>
+                                    <p><span class="text-gray-600">版本：</span>中华书局点校本</p>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-primary mb-3">收藏信息</h3>
+                                <div class="space-y-2">
+                                    <p><span class="text-gray-600">收藏编号：</span>GJ-2024-001</p>
+                                    <p><span class="text-gray-600">入库时间：</span>2024 年 3 月 15 日</p>
+                                    <p><span class="text-gray-600">保存状态：</span>良好</p>
+                                    <p><span class="text-gray-600">数字化状态：</span>已完成</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-primary mb-3">内容简介</h3>
+                            <p class="text-gray-700 leading-relaxed">
+                                《史记》是西汉史学家司马迁撰写的纪传体史书，是中国历史上第一部纪传体通史，记载了上至上古传说中的黄帝时代，下至汉武帝太初四年间共 3000 多年的历史。本纪第一记录了五帝的传说和事迹，是了解中国古代早期历史的重要文献。
+                            </p>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h3 class="text-lg font-semibold text-primary mb-3">标签分类</h3>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag-ancient px-3 py-1 !rounded-button">史书</span>
+                                <span class="tag-ancient px-3 py-1 !rounded-button">传记</span>
+                                <span class="tag-ancient px-3 py-1 !rounded-button">纪传体</span>
+                                <span class="tag-ancient px-3 py-1 !rounded-button">西汉</span>
+                                <span class="tag-ancient px-3 py-1 !rounded-button">司马迁</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 元数据信息区 -->
+                    <div class="bg-white !rounded-lg ancient-shadow p-6">
+                        <h3 class="text-lg font-semibold text-primary mb-4">详细元数据</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="border-b border-gray-200">
+                                        <th class="metadata-table text-left py-3 px-4 !rounded-tl-md">字段名称</th>
+                                        <th class="metadata-table text-left py-3 px-4">字段值</th>
+                                        <th class="metadata-table text-left py-3 px-4 !rounded-tr-md">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 px-4 font-medium text-gray-700">ISBN</td>
+                                        <td class="py-3 px-4">978-7-101-00001-1</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 px-4 font-medium text-gray-700">页数</td>
+                                        <td class="py-3 px-4">3416 页</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 px-4 font-medium text-gray-700">装帧形式</td>
+                                        <td class="py-3 px-4">线装本</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 px-4 font-medium text-gray-700">纸张材质</td>
+                                        <td class="py-3 px-4">宣纸</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 px-4 font-medium text-gray-700">字体类型</td>
+                                        <td class="py-3 px-4">楷书</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-100">
+                                        <td class="py-3 px-4 font-medium text-gray-700">数字化分辨率</td>
+                                        <td class="py-3 px-4">300 DPI</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 font-medium text-gray-700">文件格式</td>
+                                        <td class="py-3 px-4">PDF, TIFF</td>
+                                        <td class="py-3 px-4">
+                                            <button class="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-primary">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script id="search-functionality">
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.querySelector('input[type="text"]');
+            const documentItems = document.querySelectorAll('.bg-white.\\!rounded-md');
+            
+            searchInput.addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                
+                documentItems.forEach(item => {
+                    const title = item.querySelector('h3').textContent.toLowerCase();
+                    const author = item.querySelector('p').textContent.toLowerCase();
+                    
+                    if (title.includes(searchTerm) || author.includes(searchTerm)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = searchTerm === '' ? 'block' : 'none';
+                    }
+                });
+            });
+        });
+    </script>
+
+    <script id="document-selection">
+        document.addEventListener('DOMContentLoaded', function() {
+            const documentItems = document.querySelectorAll('.bg-white.\\!rounded-md');
+            
+            documentItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    documentItems.forEach(doc => doc.classList.remove('selected-item'));
+                    this.classList.add('selected-item');
+                });
+            });
+        });
+    </script>
+
+    <script id="tag-filtering">
+        document.addEventListener('DOMContentLoaded', function() {
+            const tagFilters = document.querySelectorAll('.tag-ancient');
+            const documentItems = document.querySelectorAll('.bg-white.\\!rounded-md');
+            
+            tagFilters.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const selectedTag = this.textContent.trim();
+                    
+                    this.classList.toggle('bg-primary');
+                    this.classList.toggle('text-white');
+                    
+                    const activeTags = Array.from(document.querySelectorAll('.tag-ancient.bg-primary'))
+                        .map(tag => tag.textContent.trim());
+                    
+                    documentItems.forEach(item => {
+                        const itemTags = Array.from(item.querySelectorAll('.tag-ancient'))
+                            .map(tag => tag.textContent.trim());
+                        
+                        const hasMatchingTag = activeTags.length === 0 || 
+                            activeTags.some(activeTag => itemTags.includes(activeTag));
+                        
+                        item.style.display = hasMatchingTag ? 'block' : 'none';
+                    });
+                });
+            });
+        });
+    </script>
+
+    <script id="image-controls">
+        document.addEventListener('DOMContentLoaded', function() {
+            const mainImage = document.querySelector('.image-viewer img');
+            const zoomBtn = document.querySelector('button:has(.ri-zoom-in-line)');
+            const rotateBtn = document.querySelector('button:has(.ri-rotate-left-line)');
+            
+            let currentRotation = 0;
+            let currentScale = 1;
+            
+            zoomBtn.addEventListener('click', function() {
+                currentScale = currentScale === 1 ? 1.5 : 1;
+                mainImage.style.transform = `scale(${currentScale}) rotate(${currentRotation}deg)`;
+                mainImage.style.transition = 'transform 0.3s ease';
+            });
+            
+            rotateBtn.addEventListener('click', function() {
+                currentRotation += 90;
+                mainImage.style.transform = `scale(${currentScale}) rotate(${currentRotation}deg)`;
+                mainImage.style.transition = 'transform 0.3s ease';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>情报新闻信息搜集系统</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: "#007AFF",
+              secondary: "#34C759",
+            },
+            borderRadius: {
+              none: "0px",
+              sm: "4px",
+              DEFAULT: "8px",
+              md: "12px",
+              lg: "16px",
+              xl: "20px",
+              "2xl": "24px",
+              "3xl": "32px",
+              full: "9999px",
+              button: "8px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      :where([class^="ri-"])::before { content: "\f3c2"; }
+      body { background: #1E1E1E; }
+      .network-node { cursor: pointer; transition: all 0.3s ease; }
+      .network-node:hover { transform: scale(1.1); }
+      .upload-area { border: 2px dashed #007AFF; transition: all 0.3s ease; }
+      .upload-area.dragover { border-color: #34C759; background: rgba(52, 199, 89, 0.1); }
+      .sidebar-item { transition: all 0.2s ease; }
+      .sidebar-item:hover { background: rgba(0, 122, 255, 0.1); }
+      .sidebar-item.active { background: rgba(0, 122, 255, 0.2); border-right: 3px solid #007AFF; }
+      .info-panel { backdrop-filter: blur(10px); }
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: #2C2C2E; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: #48484A; border-radius: 3px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #636366; }
+      .node-person { fill: #007AFF; }
+      .node-organization { fill: #FF9500; }
+      .node-event { fill: #34C759; }
+      .node-statement { fill: #AF52DE; }
+      .link-strong { stroke: #007AFF; stroke-width: 3px; }
+      .link-medium { stroke: #8E8E93; stroke-width: 2px; }
+      .link-weak { stroke: #48484A; stroke-width: 1px; }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-gray-100 font-sans">
+    <div class="flex h-screen">
+      <!-- 左侧导航栏 -->
+      <div class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+        <div class="p-6 border-b border-gray-700">
+          <div class="flex items-center space-x-3">
+            <div
+              class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center"
+            >
+              <i class="ri-spy-line text-white text-lg"></i>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold text-white">情报分析系统</h1>
+              <p class="text-sm text-gray-400">Intelligence Analytics</p>
+            </div>
+          </div>
+        </div>
+        <nav class="flex-1 p-4 space-y-2">
+          <div
+            class="sidebar-item active flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-file-upload-line text-primary"></i>
+            </div>
+            <span class="text-sm font-medium">文件管理</span>
+          </div>
+          <div
+            class="sidebar-item flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+            data-page="analytics"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-bar-chart-line text-gray-400"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-300">数据分析</span>
+          </div>
+          <div
+            class="sidebar-item flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+            data-page="global-events"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-global-line text-gray-400"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-300">全球事件</span>
+          </div>
+          <div
+            class="sidebar-item flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-node-tree text-gray-400"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-300">关系图谱</span>
+          </div>
+          <div
+            class="sidebar-item flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-price-tag-3-line text-gray-400"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-300">标注管理</span>
+          </div>
+          <div
+            class="sidebar-item flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-brain-line text-gray-400"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-300">模型训练</span>
+          </div>
+          <div
+            class="sidebar-item flex items-center space-x-3 p-3 rounded-lg cursor-pointer"
+          >
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-settings-3-line text-gray-400"></i>
+            </div>
+            <span class="text-sm font-medium text-gray-300">系统设置</span>
+          </div>
+        </nav>
+        <div class="p-4 border-t border-gray-700">
+          <div class="flex items-center space-x-3 p-3 rounded-lg bg-gray-700">
+            <div
+              class="w-8 h-8 bg-primary rounded-full flex items-center justify-center"
+            >
+              <i class="ri-user-line text-white text-sm"></i>
+            </div>
+            <div class="flex-1">
+              <p class="text-sm font-medium text-white">分析师 001</p>
+              <p class="text-xs text-gray-400">高级权限</p>
+            </div>
+            <div class="w-5 h-5 flex items-center justify-center">
+              <i class="ri-more-line text-gray-400"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 主内容区域 -->
+      <div class="flex-1 flex flex-col">
+        <!-- 顶部工具栏 -->
+        <div
+          class="h-16 bg-gray-800 border-b border-gray-700 flex items-center justify-between px-6"
+        >
+          <div class="flex items-center space-x-4">
+            <h2 class="text-lg font-semibold text-white">文件上传与分析</h2>
+            <div class="flex items-center space-x-2 text-sm text-gray-400">
+              <span>已处理文件：</span>
+              <span class="text-primary font-medium">1,247</span>
+              <span class="mx-2">|</span>
+              <span>活跃实体：</span>
+              <span class="text-secondary font-medium">3,891</span>
+            </div>
+          </div>
+          <div class="flex items-center space-x-4">
+            <div class="relative">
+              <input
+                type="text"
+                placeholder="搜索实体、事件、关键词..."
+                class="w-80 h-10 bg-gray-700 border border-gray-600 rounded-lg px-4 pr-10 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-primary"
+              />
+              <div
+                class="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 flex items-center justify-center"
+              >
+                <i class="ri-search-line text-gray-400"></i>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button
+                class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-filter-line text-gray-300"></i>
+              </button>
+              <button
+                class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-download-line text-gray-300"></i>
+              </button>
+              <button
+                class="w-10 h-10 bg-primary hover:bg-blue-600 rounded-lg flex items-center justify-center !rounded-button whitespace-nowrap"
+              >
+                <i class="ri-notification-line text-white"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- 工作区域 -->
+        <div class="flex-1 flex">
+          <!-- 中央工作区 -->
+          <div class="flex-1 p-6" id="mainContent">
+            <div id="uploadPage">
+              <!-- 文件上传区域 -->
+              <div class="mb-6">
+                <div
+                  class="upload-area bg-gray-800 border-gray-600 rounded-xl p-8 text-center"
+                  id="uploadArea"
+                >
+                  <div
+                    class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <i class="ri-upload-cloud-2-line text-2xl text-primary"></i>
+                  </div>
+                  <h3 class="text-lg font-semibold text-white mb-2">
+                    拖拽文件到此处或点击上传
+                  </h3>
+                  <p class="text-gray-400 mb-4">
+                    支持 PDF、DOC、TXT、JSON、XML 等多种格式
+                  </p>
+                  <button
+                    class="px-6 py-3 bg-primary hover:bg-blue-600 text-white rounded-lg font-medium !rounded-button whitespace-nowrap"
+                  >
+                    选择文件
+                  </button>
+                  <div class="mt-4 text-xs text-gray-500">
+                    最大文件大小：100MB | 支持批量上传
+                  </div>
+                </div>
+              </div>
+              <!-- 已上传文件列表 -->
+              <div class="bg-gray-800 rounded-xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold text-white">最近上传文件</h3>
+                  <div class="flex items-center space-x-2">
+                    <button
+                      class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                    >
+                      全部
+                    </button>
+                    <button
+                      class="px-3 py-1 bg-primary hover:bg-blue-600 text-sm text-white rounded-md !rounded-button whitespace-nowrap"
+                    >
+                      已处理
+                    </button>
+                    <button
+                      class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                    >
+                      处理中
+                    </button>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <div
+                    class="flex items-center justify-between p-4 bg-gray-700 rounded-lg"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center"
+                      >
+                        <i class="ri-file-pdf-line text-white"></i>
+                      </div>
+                      <div>
+                        <p class="text-white font-medium">
+                          国际贸易争端分析报告.pdf
+                        </p>
+                        <p class="text-sm text-gray-400">
+                          2.3 MB • 2024-12-20 14:32
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span
+                        class="px-2 py-1 bg-secondary text-xs text-white rounded"
+                        >已完成</span
+                      >
+                      <div class="text-sm text-gray-300">
+                        实体: 47 | 关系: 123
+                      </div>
+                      <button
+                        class="w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded-lg flex items-center justify-center !rounded-button whitespace-nowrap"
+                      >
+                        <i class="ri-eye-line text-gray-300"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-center justify-between p-4 bg-gray-700 rounded-lg"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center"
+                      >
+                        <i class="ri-file-word-line text-white"></i>
+                      </div>
+                      <div>
+                        <p class="text-white font-medium">
+                          企业并购案例研究.docx
+                        </p>
+                        <p class="text-sm text-gray-400">
+                          1.8 MB • 2024-12-20 13:45
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span
+                        class="px-2 py-1 bg-yellow-500 text-xs text-white rounded"
+                        >处理中</span
+                      >
+                      <div class="text-sm text-gray-300">进度: 67%</div>
+                      <button
+                        class="w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded-lg flex items-center justify-center !rounded-button whitespace-nowrap"
+                      >
+                        <i class="ri-pause-line text-gray-300"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    class="flex items-center justify-between p-4 bg-gray-700 rounded-lg"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <div
+                        class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center"
+                      >
+                        <i class="ri-file-text-line text-white"></i>
+                      </div>
+                      <div>
+                        <p class="text-white font-medium">
+                          新闻媒体监测数据.txt
+                        </p>
+                        <p class="text-sm text-gray-400">
+                          856 KB • 2024-12-20 12:18
+                        </p>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                      <span
+                        class="px-2 py-1 bg-secondary text-xs text-white rounded"
+                        >已完成</span
+                      >
+                      <div class="text-sm text-gray-300">
+                        实体: 89 | 关系: 267
+                      </div>
+                      <button
+                        class="w-8 h-8 bg-gray-600 hover:bg-gray-500 rounded-lg flex items-center justify-center !rounded-button whitespace-nowrap"
+                      >
+                        <i class="ri-eye-line text-gray-300"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- 关系网络图 -->
+              <div class="bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h3 class="text-lg font-semibold text-white">
+                    实体关系网络图
+                  </h3>
+                  <div class="flex items-center space-x-2">
+                    <button
+                      class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                    >
+                      <i class="ri-zoom-in-line mr-1"></i>放大
+                    </button>
+                    <button
+                      class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                    >
+                      <i class="ri-zoom-out-line mr-1"></i>缩小
+                    </button>
+                    <button
+                      class="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                    >
+                      <i class="ri-refresh-line mr-1"></i>重置
+                    </button>
+                  </div>
+                </div>
+                <div
+                  id="networkChart"
+                  class="w-full h-96 bg-gray-900 rounded-lg"
+                ></div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        <!-- 全球事件页面 -->
+        <div id="globalEventsPage" class="hidden flex-1 flex flex-col">
+            <div class="flex-1 relative">
+              <div
+                class="absolute inset-0 bg-cover bg-center"
+                style="background-image: url('https://public.readdy.ai/gen_page/map_placeholder_1280x720.png');"
+              >
+                <div
+                  id="globeContainer"
+                  class="w-full h-full flex items-center justify-center"
+                >
+                  <div id="eventMarkers" class="absolute inset-0">
+                    <!-- Event markers will be dynamically added here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="h-48 bg-gray-800 p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-white">时间轴</h3>
+                <div class="flex items-center space-x-2">
+                  <button
+                    class="px-3 py-1 bg-gray-700 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                  >
+                    <i class="ri-zoom-in-line mr-1"></i>放大
+                  </button>
+                  <button
+                    class="px-3 py-1 bg-gray-700 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                  >
+                    <i class="ri-zoom-out-line mr-1"></i>缩小
+                  </button>
+                </div>
+              </div>
+              <div class="relative h-20">
+                <div
+                  id="timeline"
+                  class="absolute inset-x-0 top-0 h-full flex items-center"
+                >
+                  <div class="w-full h-2 bg-gray-700 rounded-full relative">
+                    <div
+                      class="absolute inset-y-0 left-0 bg-primary rounded-full"
+                      style="width: 30%;"
+                    ></div>
+                    <div
+                      class="absolute -top-8 left-0 transform -translate-x-1/2"
+                      style="left: 30%;"
+                    >
+                      <div
+                        class="px-2 py-1 bg-primary rounded text-xs text-white"
+                      >
+                        2024
+                      </div>
+                    </div>
+                    <div
+                      class="absolute top-4 left-0 flex space-x-24 text-xs text-gray-400 w-full"
+                    >
+                      <span>2020</span>
+                      <span>2021</span>
+                      <span>2022</span>
+                      <span>2023</span>
+                      <span>2024</span>
+                      <span>2025</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+        <!-- 数据分析页面 -->
+        <div id="analyticsPage" class="hidden flex-1 p-6">
+          
+          <div class="grid grid-cols-3 gap-6 mb-6">
+            <!-- 关键指标卡片 -->
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-sm text-gray-400">总文件数</p>
+                  <h3 class="text-2xl font-bold text-white">1,247</h3>
+                </div>
+                <div
+                  class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center"
+                >
+                  <i class="ri-file-list-line text-primary text-xl"></i>
+                </div>
+              </div>
+              <div class="flex items-center text-xs">
+                <span class="text-green-500 mr-1">+12.5%</span>
+                <span class="text-gray-400">较上月</span>
+              </div>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-sm text-gray-400">识别实体数</p>
+                  <h3 class="text-2xl font-bold text-white">3,891</h3>
+                </div>
+                <div
+                  class="w-10 h-10 bg-orange-500/20 rounded-lg flex items-center justify-center"
+                >
+                  <i class="ri-group-line text-orange-500 text-xl"></i>
+                </div>
+              </div>
+              <div class="flex items-center text-xs">
+                <span class="text-green-500 mr-1">+8.3%</span>
+                <span class="text-gray-400">较上月</span>
+              </div>
+            </div>
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <p class="text-sm text-gray-400">关系数量</p>
+                  <h3 class="text-2xl font-bold text-white">12,458</h3>
+                </div>
+                <div
+                  class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center"
+                >
+                  <i class="ri-node-tree text-purple-500 text-xl"></i>
+                </div>
+              </div>
+              <div class="flex items-center text-xs">
+                <span class="text-green-500 mr-1">+15.7%</span>
+                <span class="text-gray-400">较上月</span>
+              </div>
+            </div>
+          </div>
+          <!-- 图表区域 -->
+          <div class="grid grid-cols-2 gap-6">
+            <!-- 实体类型分布 -->
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-white">实体类型分布</h3>
+                <select
+                  class="bg-gray-700 border-none text-sm text-gray-300 rounded-lg px-3 py-2 !rounded-button"
+                >
+                  <option>近7天</option>
+                  <option>近30天</option>
+                  <option>近90天</option>
+                </select>
+              </div>
+              <div id="entityTypeChart" class="w-96 h-80"></div>
+            </div>
+            <!-- 数据趋势 -->
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-white">数据增长趋势</h3>
+                <div class="flex items-center space-x-2">
+                  <button
+                    class="px-3 py-1 bg-gray-700 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                  >
+                    文件
+                  </button>
+                  <button
+                    class="px-3 py-1 bg-primary text-sm text-white rounded-md !rounded-button whitespace-nowrap"
+                  >
+                    实体
+                  </button>
+                  <button
+                    class="px-3 py-1 bg-gray-700 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                  >
+                    关系
+                  </button>
+                </div>
+              </div>
+              <div id="trendChart" class="w-96 h-80"></div>
+            </div>
+            <!-- 热点事件分析 -->
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-white">热点事件分析</h3>
+                <button
+                  class="px-3 py-1 bg-gray-700 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                >
+                  查看详情
+                </button>
+              </div>
+              <div id="eventHeatChart" class="w-96 h-80"></div>
+            </div>
+            <!-- 关系强度分布 -->
+            <div class="bg-gray-800 rounded-xl p-6">
+              <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-white">关系强度分布</h3>
+                <button
+                  class="px-3 py-1 bg-gray-700 text-sm text-gray-300 rounded-md !rounded-button whitespace-nowrap"
+                >
+                  导出数据
+                </button>
+              </div>
+              <div id="relationshipChart" class="w-96 h-80"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧信息面板 -->
+        <div id="info"
+            class="hidden w-80 bg-gray-800 border-l border-gray-700 flex flex-col"
+        >
+            <div class="p-6 border-b border-gray-700">
+            <h3 class="text-lg font-semibold text-white mb-4">实体详情</h3>
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-700 rounded-lg">
+                <div class="flex items-center space-x-3 mb-3">
+                    <div
+                    class="w-8 h-8 bg-primary rounded-full flex items-center justify-center"
+                    >
+                    <i class="ri-user-line text-white text-sm"></i>
+                    </div>
+                    <div>
+                    <p class="text-white font-medium">张明华</p>
+                    <p class="text-xs text-gray-400">人物实体</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                    <span class="text-gray-400">权重分数:</span>
+                    <span class="text-primary font-medium">8.7</span>
+                    </div>
+                    <div class="flex justify-between">
+                    <span class="text-gray-400">关联数量:</span>
+                    <span class="text-white">23</span>
+                    </div>
+                    <div class="flex justify-between">
+                    <span class="text-gray-400">首次出现:</span>
+                    <span class="text-white">2024-11-15</span>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+            <div class="flex-1 p-6 custom-scrollbar overflow-y-auto">
+            <div class="space-y-6">
+                <!-- 关联分析 -->
+                <div>
+                <h4 class="text-sm font-semibold text-white mb-3">
+                    关联分析
+                </h4>
+                <div class="space-y-2">
+                    <div
+                    class="flex items-center justify-between p-3 bg-gray-700 rounded-lg"
+                    >
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-orange-500 rounded-full"></div>
+                        <span class="text-sm text-white">华盛集团</span>
+                    </div>
+                    <span class="text-xs text-gray-400">强关联</span>
+                    </div>
+                    <div
+                    class="flex items-center justify-between p-3 bg-gray-700 rounded-lg"
+                    >
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-secondary rounded-full"></div>
+                        <span class="text-sm text-white">并购事件</span>
+                    </div>
+                    <span class="text-xs text-gray-400">中等关联</span>
+                    </div>
+                    <div
+                    class="flex items-center justify-between p-3 bg-gray-700 rounded-lg"
+                    >
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-purple-500 rounded-full"></div>
+                        <span class="text-sm text-white">"市场前景看好"</span>
+                    </div>
+                    <span class="text-xs text-gray-400">弱关联</span>
+                    </div>
+                </div>
+                </div>
+                <!-- 智能标注 -->
+                <div>
+                <h4 class="text-sm font-semibold text-white mb-3">
+                    智能标注建议
+                </h4>
+                <div class="space-y-2">
+                    <div
+                    class="p-3 bg-blue-900/30 border border-blue-700 rounded-lg"
+                    >
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i
+                        class="ri-lightbulb-line text-blue-400 text-sm"
+                        ></i>
+                        <span class="text-sm text-blue-400 font-medium"
+                        >新发现</span
+                        >
+                    </div>
+                    <p class="text-xs text-gray-300">
+                        检测到潜在的利益冲突关系，建议添加"利益相关"标签
+                    </p>
+                    </div>
+                    <div
+                    class="p-3 bg-yellow-900/30 border border-yellow-700 rounded-lg"
+                    >
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="ri-alert-line text-yellow-400 text-sm"></i>
+                        <span class="text-sm text-yellow-400 font-medium"
+                        >注意</span
+                        >
+                    </div>
+                    <p class="text-xs text-gray-300">
+                        该实体在多个敏感事件中出现，权重可能需要调整
+                    </p>
+                    </div>
+                </div>
+                </div>
+                <!-- 时间线 -->
+                <div>
+                <h4 class="text-sm font-semibold text-white mb-3">
+                    活动时间线
+                </h4>
+                <div class="space-y-3">
+                    <div class="flex items-start space-x-3">
+                    <div class="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                    <div>
+                        <p class="text-sm text-white">参与董事会会议</p>
+                        <p class="text-xs text-gray-400">2024-12-18</p>
+                    </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                    <div
+                        class="w-2 h-2 bg-secondary rounded-full mt-2"
+                    ></div>
+                    <div>
+                        <p class="text-sm text-white">发表公开声明</p>
+                        <p class="text-xs text-gray-400">2024-12-15</p>
+                    </div>
+                    </div>
+                    <div class="flex items-start space-x-3">
+                    <div
+                        class="w-2 h-2 bg-orange-500 rounded-full mt-2"
+                    ></div>
+                    <div>
+                        <p class="text-sm text-white">签署合作协议</p>
+                        <p class="text-xs text-gray-400">2024-12-10</p>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+            </div>
+            <div class="p-6 border-t border-gray-700">
+            <button
+                class="w-full py-3 bg-primary hover:bg-blue-600 text-white rounded-lg font-medium !rounded-button whitespace-nowrap"
+            >
+                生成分析报告
+            </button>
+            </div>
+        </div>
+      </div>
+    </div>
+    <script id="upload-functionality">
+      document.addEventListener("DOMContentLoaded", function () {
+        const uploadArea = document.getElementById("uploadArea");
+        uploadArea.addEventListener("dragover", function (e) {
+          e.preventDefault();
+          uploadArea.classList.add("dragover");
+        });
+        uploadArea.addEventListener("dragleave", function (e) {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+        });
+        uploadArea.addEventListener("drop", function (e) {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+          const files = e.dataTransfer.files;
+          handleFiles(files);
+        });
+        uploadArea.addEventListener("click", function () {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.multiple = true;
+          input.accept = ".pdf,.doc,.docx,.txt,.json,.xml";
+          input.onchange = function (e) {
+            handleFiles(e.target.files);
+          };
+          input.click();
+        });
+        function handleFiles(files) {
+          for (let file of files) {
+            console.log("上传文件:", file.name);
+          }
+        }
+      });
+    </script>
+    <script id="network-chart">
+      document.addEventListener("DOMContentLoaded", function () {
+        const chartDom = document.getElementById("networkChart");
+        const myChart = echarts.init(chartDom, "dark");
+        const option = {
+          animation: false,
+          backgroundColor: "#111827",
+          tooltip: {
+            trigger: "item",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            borderColor: "#007AFF",
+            textStyle: { color: "#fff" },
+          },
+          series: [
+            {
+              type: "graph",
+              layout: "force",
+              symbolSize: function (value) {
+                return Math.sqrt(value) * 10;
+              },
+              roam: true,
+              label: {
+                show: true,
+                position: "right",
+                formatter: "{b}",
+                color: "#fff",
+                fontSize: 12,
+              },
+              edgeSymbol: ["circle", "arrow"],
+              edgeSymbolSize: [4, 10],
+              force: {
+                repulsion: 1000,
+                gravity: 0.1,
+                edgeLength: 100,
+                layoutAnimation: true,
+              },
+              data: [
+                {
+                  name: "张明华",
+                  value: 85,
+                  category: 0,
+                  itemStyle: { color: "#007AFF" },
+                },
+                {
+                  name: "华盛集团",
+                  value: 72,
+                  category: 1,
+                  itemStyle: { color: "#FF9500" },
+                },
+                {
+                  name: "并购事件",
+                  value: 68,
+                  category: 2,
+                  itemStyle: { color: "#34C759" },
+                },
+                {
+                  name: "李建国",
+                  value: 61,
+                  category: 0,
+                  itemStyle: { color: "#007AFF" },
+                },
+                {
+                  name: "东方投资",
+                  value: 58,
+                  category: 1,
+                  itemStyle: { color: "#FF9500" },
+                },
+                {
+                  name: "股权转让",
+                  value: 55,
+                  category: 2,
+                  itemStyle: { color: "#34C759" },
+                },
+                {
+                  name: '"市场前景看好"',
+                  value: 45,
+                  category: 3,
+                  itemStyle: { color: "#AF52DE" },
+                },
+                {
+                  name: "王晓丽",
+                  value: 42,
+                  category: 0,
+                  itemStyle: { color: "#007AFF" },
+                },
+                {
+                  name: "监管机构",
+                  value: 38,
+                  category: 1,
+                  itemStyle: { color: "#FF9500" },
+                },
+                {
+                  name: "合规审查",
+                  value: 35,
+                  category: 2,
+                  itemStyle: { color: "#34C759" },
+                },
+              ],
+              links: [
+                {
+                  source: "张明华",
+                  target: "华盛集团",
+                  value: 8,
+                  lineStyle: { width: 3, color: "#007AFF" },
+                },
+                {
+                  source: "张明华",
+                  target: "并购事件",
+                  value: 6,
+                  lineStyle: { width: 2, color: "#8E8E93" },
+                },
+                {
+                  source: "华盛集团",
+                  target: "并购事件",
+                  value: 7,
+                  lineStyle: { width: 3, color: "#007AFF" },
+                },
+                {
+                  source: "李建国",
+                  target: "东方投资",
+                  value: 5,
+                  lineStyle: { width: 2, color: "#8E8E93" },
+                },
+                {
+                  source: "李建国",
+                  target: "股权转让",
+                  value: 4,
+                  lineStyle: { width: 1, color: "#48484A" },
+                },
+                {
+                  source: "张明华",
+                  target: '"市场前景看好"',
+                  value: 3,
+                  lineStyle: { width: 1, color: "#48484A" },
+                },
+                {
+                  source: "王晓丽",
+                  target: "监管机构",
+                  value: 6,
+                  lineStyle: { width: 2, color: "#8E8E93" },
+                },
+                {
+                  source: "监管机构",
+                  target: "合规审查",
+                  value: 5,
+                  lineStyle: { width: 2, color: "#8E8E93" },
+                },
+                {
+                  source: "华盛集团",
+                  target: "东方投资",
+                  value: 4,
+                  lineStyle: { width: 1, color: "#48484A" },
+                },
+              ],
+              categories: [
+                { name: "人物" },
+                { name: "组织" },
+                { name: "事件" },
+                { name: "言论" },
+              ],
+            },
+          ],
+        };
+        myChart.setOption(option);
+        window.addEventListener("resize", function () {
+          myChart.resize();
+        });
+      });
+    </script>
+    <script id="analytics-charts">
+      document.addEventListener("DOMContentLoaded", function () {
+        const entityTypeChart = echarts.init(
+          document.getElementById("entityTypeChart"),
+          "dark",
+        );
+        const trendChart = echarts.init(
+          document.getElementById("trendChart"),
+          "dark",
+        );
+        const eventHeatChart = echarts.init(
+          document.getElementById("eventHeatChart"),
+          "dark",
+        );
+        const relationshipChart = echarts.init(
+          document.getElementById("relationshipChart"),
+          "dark",
+        );
+        const entityTypeOption = {
+          animation: false,
+          backgroundColor: "transparent",
+          tooltip: {
+            trigger: "item",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            borderColor: "#007AFF",
+          },
+          legend: {
+            orient: "vertical",
+            right: 10,
+            top: "center",
+            textStyle: { color: "#9CA3AF" },
+          },
+          series: [
+            {
+              name: "实体类型",
+              type: "pie",
+              radius: ["40%", "70%"],
+              avoidLabelOverlap: false,
+              itemStyle: {
+                borderRadius: 10,
+                borderColor: "#111827",
+                borderWidth: 2,
+              },
+              label: {
+                show: false,
+              },
+              emphasis: {
+                label: {
+                  show: true,
+                  formatter: "{b}\n{d}%",
+                  fontSize: 14,
+                  fontWeight: "bold",
+                },
+              },
+              labelLine: {
+                show: false,
+              },
+              data: [
+                {
+                  value: 1048,
+                  name: "人物",
+                  itemStyle: { color: "rgba(87, 181, 231, 1)" },
+                },
+                {
+                  value: 735,
+                  name: "组织",
+                  itemStyle: { color: "rgba(141, 211, 199, 1)" },
+                },
+                {
+                  value: 580,
+                  name: "事件",
+                  itemStyle: { color: "rgba(251, 191, 114, 1)" },
+                },
+                {
+                  value: 484,
+                  name: "地点",
+                  itemStyle: { color: "rgba(252, 141, 98, 1)" },
+                },
+              ],
+            },
+          ],
+        };
+        const trendOption = {
+          animation: false,
+          backgroundColor: "transparent",
+          tooltip: {
+            trigger: "axis",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            borderColor: "#007AFF",
+          },
+          grid: {
+            left: "3%",
+            right: "4%",
+            bottom: "3%",
+            containLabel: true,
+          },
+          xAxis: {
+            type: "category",
+            boundaryGap: false,
+            data: ["1月", "2月", "3月", "4月", "5月", "6月", "7月"],
+            axisLine: { lineStyle: { color: "#374151" } },
+            axisLabel: { color: "#9CA3AF" },
+          },
+          yAxis: {
+            type: "value",
+            axisLine: { lineStyle: { color: "#374151" } },
+            axisLabel: { color: "#9CA3AF" },
+          },
+          series: [
+            {
+              name: "实体数量",
+              type: "line",
+              smooth: true,
+              lineStyle: {
+                width: 3,
+                color: "rgba(87, 181, 231, 1)",
+              },
+              areaStyle: {
+                opacity: 0.1,
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  {
+                    offset: 0,
+                    color: "rgba(87, 181, 231, 0.3)",
+                  },
+                  {
+                    offset: 1,
+                    color: "rgba(87, 181, 231, 0.1)",
+                  },
+                ]),
+              },
+              emphasis: {
+                focus: "series",
+              },
+              data: [820, 932, 901, 934, 1290, 1330, 1520],
+            },
+          ],
+        };
+        const eventHeatOption = {
+          animation: false,
+          backgroundColor: "transparent",
+          tooltip: {
+            trigger: "axis",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            borderColor: "#007AFF",
+          },
+          grid: {
+            left: "3%",
+            right: "4%",
+            bottom: "3%",
+            containLabel: true,
+          },
+          xAxis: {
+            type: "category",
+            data: ["并购", "投资", "合作", "产品", "人事", "监管", "其他"],
+            axisLine: { lineStyle: { color: "#374151" } },
+            axisLabel: { color: "#9CA3AF" },
+          },
+          yAxis: {
+            type: "value",
+            axisLine: { lineStyle: { color: "#374151" } },
+            axisLabel: { color: "#9CA3AF" },
+          },
+          series: [
+            {
+              type: "bar",
+              data: [
+                { value: 58, itemStyle: { color: "rgba(87, 181, 231, 1)" } },
+                { value: 52, itemStyle: { color: "rgba(141, 211, 199, 1)" } },
+                { value: 45, itemStyle: { color: "rgba(251, 191, 114, 1)" } },
+                { value: 40, itemStyle: { color: "rgba(252, 141, 98, 1)" } },
+                { value: 35, itemStyle: { color: "rgba(87, 181, 231, 0.8)" } },
+                { value: 30, itemStyle: { color: "rgba(141, 211, 199, 0.8)" } },
+                { value: 25, itemStyle: { color: "rgba(251, 191, 114, 0.8)" } },
+              ],
+              itemStyle: {
+                borderRadius: [8, 8, 0, 0],
+              },
+            },
+          ],
+        };
+        const relationshipOption = {
+          animation: false,
+          backgroundColor: "transparent",
+          tooltip: {
+            trigger: "item",
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            borderColor: "#007AFF",
+          },
+          radar: {
+            indicator: [
+              { name: "直接关系", max: 100 },
+              { name: "间接关系", max: 100 },
+              { name: "潜在关系", max: 100 },
+              { name: "历史关系", max: 100 },
+              { name: "关联强度", max: 100 },
+            ],
+            splitLine: {
+              lineStyle: {
+                color: "#374151",
+              },
+            },
+            axisLine: {
+              lineStyle: {
+                color: "#374151",
+              },
+            },
+            name: {
+              textStyle: {
+                color: "#9CA3AF",
+              },
+            },
+          },
+          series: [
+            {
+              type: "radar",
+              data: [
+                {
+                  value: [85, 65, 55, 45, 75],
+                  name: "关系分布",
+                  areaStyle: {
+                    color: new echarts.graphic.RadialGradient(0.5, 0.5, 1, [
+                      {
+                        color: "rgba(87, 181, 231, 0.3)",
+                        offset: 0,
+                      },
+                      {
+                        color: "rgba(87, 181, 231, 0.1)",
+                        offset: 1,
+                      },
+                    ]),
+                  },
+                  lineStyle: {
+                    color: "rgba(87, 181, 231, 1)",
+                    width: 2,
+                  },
+                },
+              ],
+            },
+          ],
+        };
+        entityTypeChart.setOption(entityTypeOption);
+        trendChart.setOption(trendOption);
+        eventHeatChart.setOption(eventHeatOption);
+        relationshipChart.setOption(relationshipOption);
+        window.addEventListener("resize", function () {
+          entityTypeChart.resize();
+          trendChart.resize();
+          eventHeatChart.resize();
+          relationshipChart.resize();
+        });
+      });
+    </script>
+    <script id="sidebar-navigation">
+      document.addEventListener("DOMContentLoaded", function () {
+        const sidebarItems = document.querySelectorAll(".sidebar-item");
+        const uploadPage = document.getElementById("uploadPage");
+        const analyticsPage = document.getElementById("analyticsPage");
+        const globalEventsPage = document.getElementById("globalEventsPage");
+        sidebarItems.forEach((item) => {
+          item.addEventListener("click", function () {
+            sidebarItems.forEach((i) => i.classList.remove("active"));
+            this.classList.add("active");
+            const page = this.getAttribute("data-page");
+            uploadPage.classList.add("hidden");
+            analyticsPage.classList.add("hidden");
+            globalEventsPage.classList.add("hidden");
+            if (page === "analytics") {
+              analyticsPage.classList.remove("hidden");
+            } else if (page === "global-events") {
+              globalEventsPage.classList.remove("hidden");
+              initGlobalEvents();
+            } else {
+              uploadPage.classList.remove("hidden");
+            }
+          });
+        });
+        function initGlobalEvents() {
+          const eventData = {
+            2024: [
+              {
+                lat: 35.6762,
+                lng: 139.6503,
+                title: "东京奥运会延期举办",
+                content: "受全球疫情影响，2024东京奥运会延期举办，引发全球关注。",
+              },
+              {
+                lat: 40.7128,
+                lng: -74.006,
+                title: "纽约新能源政策实施",
+                content:
+                  "纽约市实施新的可再生能源政策，计划到2030年实现80%清洁能源使用。",
+              },
+            ],
+            2023: [
+              {
+                lat: 48.8566,
+                lng: 2.3522,
+                title: "巴黎气候协议修订",
+                content:
+                  "全球各国在巴黎达成新的气候变化应对协议，设定更严格的减排目标。",
+              },
+              {
+                lat: -33.8688,
+                lng: 151.2093,
+                title: "悉尼科技创新中心启动",
+                content:
+                  "澳大利亚最大的科技创新中心在悉尼启动，吸引全球科技企业入驻。",
+              },
+            ],
+          };
+          const markers = document.getElementById("eventMarkers");
+          markers.innerHTML = "";
+          const currentYear = "2024";
+          eventData[currentYear].forEach((event) => {
+            const marker = document.createElement("div");
+            marker.className =
+              "absolute w-4 h-4 bg-primary rounded-full cursor-pointer transform hover:scale-150 transition-transform";
+            marker.style.left = `${((event.lng + 180) / 360) * 100}%`;
+            marker.style.top = `${((90 - event.lat) / 180) * 100}%`;
+            marker.addEventListener("click", () => showEventDetails(event));
+            markers.appendChild(marker);
+          });
+        }
+        function showEventDetails(event) {
+          const modal = document.createElement("div");
+          modal.className = "fixed inset-0 flex items-center justify-center z-50";
+          modal.innerHTML = `
+      <div class="absolute inset-0 bg-black bg-opacity-50"></div>
+      <div class="relative bg-gray-800 rounded-xl p-6 max-w-lg w-full mx-4">
+      <button class="absolute top-4 right-4 text-gray-400 hover:text-white">
+      <i class="ri-close-line text-xl"></i>
+      </button>
+      <h3 class="text-xl font-semibold text-white mb-2">${event.title}</h3>
+      <p class="text-gray-300">${event.content}</p>
+      <div class="mt-4 flex space-x-2">
+      <button class="px-4 py-2 bg-primary text-white rounded-lg !rounded-button whitespace-nowrap">查看详情</button>
+      <button class="px-4 py-2 bg-gray-700 text-gray-300 rounded-lg !rounded-button whitespace-nowrap">关闭</button>
+      </div>
+      </div>
+      `;
+          document.body.appendChild(modal);
+          modal.querySelector("button").addEventListener("click", () => {
+            document.body.removeChild(modal);
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
